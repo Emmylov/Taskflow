@@ -1,0 +1,11 @@
+- [Stripe sync runtime](stripe-replit-sync-runtime.md) — connector secret shape and migration files require runtime-aware handling.
+- [Workspace React peer dependency](react-workspace-peer.md) — shared auth hooks need one React instance; keep React peer-only and Vite deduped.
+- [OpenAPI path grouping](openapi-path-grouping.md) — operations sharing one path must stay under one YAML path mapping or codegen fails on duplicate HTTP keys.
+- [Private object path variants](private-object-paths.md) — stored private-media URLs may include the storage bucket prefix, so protected readers must normalize and support both representations.
+- [TaskFlow API preview routing](taskflow-api-routing.md) — the storefront dev server must proxy `/api` to the separate API artifact during local preview.
+- [TaskFlow deliverables workflow](taskflow-deliverables-workflow.md) — keep deliverables separate from chat, with versioned files and customer review states.
+- [TaskFlow operations workspace](taskflow-operations-workspace.md) — active work belongs in the inbox; closed work stays recoverable in Archive, and payment references are optional reconciliation metadata.
+- [TaskFlow portfolio media](taskflow-portfolio-media.md) — use clearly labeled representative previews until real client-approved portfolio files are supplied.
+- [TaskFlow schema readiness](taskflow-schema-readiness.md) — owner workspace checks require the development database schema to be applied before route verification.
+- [Whop API-key permissions](whop-api-key-permissions.md) — identifying a Whop account does not imply permission to read its products or pricing variants.
+- [TaskFlow agency-template demos](taskflow-agency-template.md) — buyers need public client, creator, and admin previews that cannot grant access to real accounts.

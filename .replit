@@ -1,0 +1,36 @@
+modules = ["nodejs-24", "python-base-3.13", "postgresql-16"]
+
+[deployment]
+router = "application"
+deploymentTarget = "autoscale"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
+[workflows]
+runButton = "Project"
+
+[agent]
+stack = "PNPM_WORKSPACE"
+expertMode = true
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000
+
+[nix]
+channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+TASKFLOW_OWNER_EMAILS = "emmanuellaiyayi5@gmail.com,emmanuellaiyayi54@gmail.com"
+VITE_TASKFLOW_OWNER_EMAILS = "emmanuellaiyayi5@gmail.com,emmanuellaiyayi54@gmail.com"
+WHOP_COMPANY_ID = "biz_RuYf3HPLM3xlQM"
+WHOP_PLAN_GROWTH = "plan_NP2hR7I1zDRww"
+WHOP_PLAN_SCALE = "plan_EreZgykcVEwON"
+WHOP_PLAN_STARTER = "plan_6GGZotP9iiD2v"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-7ce6c439-5ac0-4b28-843b-f9ec35995479"

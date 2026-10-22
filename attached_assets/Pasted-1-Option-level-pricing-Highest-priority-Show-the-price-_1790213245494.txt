@@ -1,0 +1,84 @@
+1. Option-level pricing
+Highest priority. Show the price or range beside every scope option, along with what changes between Starter, Growth, and Scale.
+
+This will improve trust more than adding another visual effect.
+
+2. Portfolio examples on every service
+Add 2–4 examples for each service:
+
+Before/after
+Short video previews
+Sample social posts
+Brand system previews
+Automation map examples
+Landing page screenshots
+People will accept higher prices when they can see the quality and output.
+
+3. Customer file uploads
+Let customers attach:
+
+Logos
+Brand guidelines
+Reference videos
+Copy
+Product photos
+Existing designs
+Brief documents
+You already have project chat, so file attachments are the natural next step.
+
+4. Request status timeline
+Show customers a clear timeline:
+
+Request received
+Scope under review
+Questions answered
+Scope approved
+Work in progress
+Review requested
+Final delivery
+Invoice sent
+Paid
+Let the owner update the status from the inbox.
+
+5. Customer email notifications
+You currently notify the owner about new requests. Add customer emails for:
+
+Request received
+New chat message
+Scope approved
+Work ready for review
+Invoice or payment link available
+Final delivery
+Also add an unread message count in the account area.
+
+6. Stripe invoice creation from the owner inbox
+The owner should be able to:
+
+Review the request.
+Adjust the final amount.
+Send a Stripe invoice.
+Track whether it is open, paid, or overdue.
+That would complete the request-first business flow without forcing payment too early.
+
+7. Reviews and testimonials
+After a project is completed, let the customer leave:
+
+Rating
+Short testimonial
+Permission to display the work publicly
+This will make the higher-priced services easier to sell.
+
+8. Pricing experiments
+Before changing prices permanently, test:
+
+Current price
+Slightly higher price with stronger proof
+Lower starter price with paid add-ons
+Bundled packages
+Track:
+
+Service detail views
+Add-to-project clicks
+Request submissions
+Abandoned carts
+Which services get questions but no requests

@@ -1,0 +1,41 @@
+# Role & Objective (High-Fidelity Upgrade Refactor)
+Refactor and upgrade the existing "TaskFlow" codebase from a standard service storefront into a high-value B2B Agency Operating System (SaaS) asset. Focus on adding automated asset distribution, a subscription credit engine, and automated agency webhooks to command a \$50,000+ acquisition valuation.
+
+Maintain the soft, bright, playful Canva-inspired UI design system (`#F4F5F7` canvas, pure white cards with soft shadows, `#00C4CC` teal and `#FF6584` coral accents, and `rounded-2xl` panel geometries).
+
+---
+
+## 1. Credit-Based SaaS Subscription Engine
+- Upgrade the checkout and billing UI to support **Monthly Retainer Credit Packs**:
+  - **Starter Agency:** \$299/mo (10 Task Credits/mo)
+  - **Growth Retainer:** \$799/mo (30 Task Credits/mo)
+  - **Scale Unlimited:** \$1,499/mo (75 Task Credits/mo + 5-day express coordination)
+- Display an active "Credit Balance Vault" pill badge in the header navigation for client accounts.
+
+---
+
+## 2. Automated Brand Vault & Asset Bundling Engine
+- Enhance the Brand Vault so that when a client enters their brand kit (logo, colors, fonts, voice guidelines, sample assets):
+  - The system automatically packages these assets into an **Automated Creative Brief Package**.
+  - Add a one-click button in the Admin/Fulfillment Portal: **"Export Automated Brief & Assets (.zip)"** that organizes brand assets into structured folders (`/Logos`, `/Colors_and_Fonts`, `/Raw_Brand_Assets`) for instant specialist handoff.
+
+---
+
+## 3. Webhook & Automation Dispatch Panel
+- Add an **Automated Integrations** settings view inside the Admin Portal with toggle controls and API/Webhook endpoint inputs for:
+  - **Zapier / Make.com Webhook Dispatch:** Automatically posts new project briefs to external agency boards.
+  - **Figma & Canva Asset Injection:** Auto-populates brand templates upon order placement.
+  - **Slack / Discord Notifications:** Real-time channel alerts for order state changes.
+
+---
+
+## 4. Multi-Service Review & Frame-Accurate Feedback Engine
+- Add an interactive deliverable review modal:
+  - Clients can click on uploaded video/graphic previews to leave pinpoint marker comments (e.g., *"Change background logo at 00:04"* or *"Adjust text font color here"*).
+  - Include a prominent **"Approve & Mark Complete"** button that auto-deducts or updates project milestone states.
+
+---
+
+## Preservation Checklist
+- Keep all existing client dashboard routes, project creation flows, and order tracking steps intact.
+- Focus updates on making fulfillment feel completely automated, scalable, and software-driven rather than human-dependent.

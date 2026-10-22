@@ -1,0 +1,2246 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: orders
+    description: TaskFlow project checkout operations
+  - name: deliverables
+    description: Project file delivery and review operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /payment-config:
+    get:
+      operationId: getPaymentConfig
+      tags: [orders]
+      summary: Get the configured payment model
+      responses:
+        "200":
+          description: Current payment configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentConfig"
+  /billing/plans:
+    get:
+      operationId: getBillingPlans
+      tags: [orders]
+      summary: Get monthly TaskFlow credit plans
+      responses:
+        "200":
+          description: Credit plans and checkout availability
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPlanList"
+  /account/credits:
+    get:
+      operationId: getAccountCredits
+      tags: [orders]
+      summary: Get the signed-in customer's request credit balance
+      responses:
+        "200":
+          description: Credit balance and active plan state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditBalance"
+        "401":
+          description: Authentication required
+  /billing/checkout:
+    post:
+      operationId: createBillingCheckout
+      tags: [orders]
+      summary: Start a hosted Whop checkout for a monthly credit plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BillingCheckoutInput"
+      responses:
+        "200":
+          description: Hosted checkout URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingCheckoutResponse"
+        "400":
+          description: Invalid plan or return URL
+        "401":
+          description: Authentication required
+        "503":
+          description: Whop billing is not configured
+  /account/brand-vault:
+    get:
+      operationId: getBrandVault
+      tags: [orders]
+      summary: Get the signed-in customer's brand kit and assets
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: taskId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Brand kit and private asset metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BrandVault"
+        "401":
+          description: Authentication required
+    put:
+      operationId: updateBrandVault
+      tags: [orders]
+      summary: Update the signed-in customer's brand kit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BrandVaultInput"
+      responses:
+        "200":
+          description: Updated brand kit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BrandVault"
+        "400":
+          description: Invalid brand kit
+        "401":
+          description: Authentication required
+  /account/brand-vault/assets:
+    post:
+      operationId: createBrandVaultAsset
+      tags: [orders]
+      summary: Add uploaded private brand asset metadata
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BrandAssetInput"
+      responses:
+        "201":
+          description: Brand asset created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BrandAsset"
+        "400":
+          description: Invalid asset
+        "401":
+          description: Authentication required
+  /account/brand-vault/assets/{assetId}:
+    delete:
+      operationId: deleteBrandVaultAsset
+      tags: [orders]
+      summary: Remove a brand asset
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Asset removed
+        "401":
+          description: Authentication required
+        "404":
+          description: Asset not found
+  /storage/brand-vault/uploads/request-url:
+    post:
+      operationId: requestBrandVaultUpload
+      tags: [orders]
+      summary: Request a signed upload URL for a private brand asset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BrandAssetUploadInput"
+      responses:
+        "200":
+          description: Signed upload URL and object path
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderUploadUrlResponse"
+        "401":
+          description: Authentication required
+  /owner/brand-vault/{userId}/export:
+    get:
+      operationId: exportBrandVaultBrief
+      tags: [orders]
+      summary: Export a customer's creative brief and brand assets as a ZIP
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Creative brief and brand assets
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        "401":
+          description: Authentication required
+        "403":
+          description: Owner access required
+        "404":
+          description: Brand vault not found
+  /owner/automations:
+    get:
+      operationId: getOwnerAutomations
+      tags: [orders]
+      summary: Get owner automation configuration status
+      responses:
+        "200":
+          description: Automation settings without secret endpoint values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationList"
+        "401":
+          description: Authentication required
+        "403":
+          description: Owner access required
+    put:
+      operationId: updateOwnerAutomation
+      tags: [orders]
+      summary: Configure an automation webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutomationInput"
+      responses:
+        "200":
+          description: Updated automation status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationStatus"
+        "400":
+          description: Invalid provider or endpoint
+        "401":
+          description: Authentication required
+        "403":
+          description: Owner access required
+  /orders/requests:
+    post:
+      operationId: createOrderRequest
+      tags: [orders]
+      summary: Submit a TaskFlow project request for review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutInput"
+      responses:
+        "201":
+          description: Project request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderRequestResponse"
+        "400":
+          description: Invalid project or cart
+        "401":
+          description: Authentication required
+        "503":
+          description: Notification provider unavailable
+  /orders:
+    get:
+      operationId: getOrders
+      tags: [orders]
+      summary: Get the signed-in customer's project requests
+      responses:
+        "200":
+          description: Project requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderList"
+        "401":
+          description: Authentication required
+  /orders/{orderId}:
+    get:
+      operationId: getOrderStatus
+      tags: [orders]
+      summary: Get the payment status for a TaskFlow order
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Order payment status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderStatus"
+        "404":
+          description: Order not found
+  /orders/{orderId}/activity:
+    get:
+      operationId: getOrderActivity
+      tags: [orders]
+      summary: Get the project activity timeline
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Activity timeline
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityEvent"
+        "401":
+          description: Authentication required
+        "404":
+          description: Project not found
+  /orders/{orderId}/deliverables:
+    get:
+      operationId: getOrderDeliverables
+      tags: [deliverables]
+      summary: Get the deliverables for a project
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Project deliverables
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliverableList"
+        "401":
+          description: Authentication required
+        "404":
+          description: Project not found
+    post:
+      operationId: createOrderDeliverable
+      tags: [deliverables]
+      summary: Add a new deliverable version to a project
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliverableInput"
+      responses:
+        "201":
+          description: Deliverable created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deliverable"
+        "400":
+          description: Invalid deliverable
+        "401":
+          description: Authentication required
+        "403":
+          description: Owner access required
+        "404":
+          description: Project not found
+  /orders/{orderId}/deliverables/{deliverableId}/review:
+    post:
+      operationId: reviewOrderDeliverable
+      tags: [deliverables]
+      summary: Approve a deliverable or request changes
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deliverableId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliverableReviewInput"
+      responses:
+        "200":
+          description: Deliverable review recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliverableReviewResponse"
+        "400":
+          description: Invalid review
+        "401":
+          description: Authentication required
+        "404":
+          description: Deliverable not found
+  /orders/{orderId}/deliverables/{deliverableId}/comments:
+    get:
+      operationId: getDeliverableComments
+      tags: [deliverables]
+      summary: Get timestamp and canvas-marker feedback for a deliverable
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deliverableId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Deliverable review comments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliverableCommentList"
+        "401":
+          description: Authentication required
+        "404":
+          description: Deliverable not found
+    post:
+      operationId: createDeliverableComment
+      tags: [deliverables]
+      summary: Add a timestamp, graphic-point, or general comment
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deliverableId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliverableCommentInput"
+      responses:
+        "201":
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliverableComment"
+        "400":
+          description: Invalid comment marker
+        "401":
+          description: Authentication required
+        "404":
+          description: Deliverable not found
+  /orders/{orderId}/approve-price:
+    post:
+      operationId: approveOrderPrice
+      tags: [orders]
+      summary: Approve the owner price proposal
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Price approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceDecisionResponse"
+        "400":
+          description: No proposal is ready
+        "401":
+          description: Authentication required
+        "404":
+          description: Order not found
+  /orders/{orderId}/request-price-change:
+    post:
+      operationId: requestOrderPriceChange
+      tags: [orders]
+      summary: Request a change to the owner price proposal
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PriceChangeInput"
+      responses:
+        "200":
+          description: Change request sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceDecisionResponse"
+        "400":
+          description: Feedback is invalid
+        "401":
+          description: Authentication required
+        "404":
+          description: Order not found
+  /conversations/{orderId}/messages:
+    get:
+      operationId: getConversationMessages
+      tags: [orders]
+      summary: Get messages for a project conversation
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Conversation messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageList"
+        "401":
+          description: Authentication required
+        "404":
+          description: Conversation not found
+    post:
+      operationId: createConversationMessage
+      tags: [orders]
+      summary: Add a message to a project conversation
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Message created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "400":
+          description: Invalid message
+        "401":
+          description: Authentication required
+        "404":
+          description: Conversation not found
+  /conversations/{orderId}/typing:
+    get:
+      operationId: getConversationTyping
+      tags: [orders]
+      summary: Get live typing state for a project conversation
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Typing state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TypingStatus"
+        "401":
+          description: Authentication required
+        "404":
+          description: Conversation not found
+    post:
+      operationId: updateConversationTyping
+      tags: [orders]
+      summary: Update the signed-in user's typing state
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TypingInput"
+      responses:
+        "200":
+          description: Typing state updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required: [ok]
+        "400":
+          description: Invalid typing state
+        "401":
+          description: Authentication required
+        "404":
+          description: Conversation not found
+  /conversations/{orderId}/messages/{messageId}/reactions:
+    post:
+      operationId: toggleMessageReaction
+      tags: [orders]
+      summary: Toggle a reaction on a message
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReactionInput"
+      responses:
+        "200":
+          description: Reaction toggled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  active:
+                    type: boolean
+                required: [ok, active]
+        "400":
+          description: Invalid reaction
+        "401":
+          description: Authentication required
+        "404":
+          description: Message not found
+  /account/role:
+    get:
+      operationId: getAccountRole
+      tags: [account]
+      summary: Get the signed-in user's workspace role and invitation status
+      responses:
+        "200":
+          description: Workspace role and onboarding state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountRole"
+        "401":
+          description: Authentication required
+    put:
+      operationId: updateAccountRole
+      tags: [account]
+      summary: Select the client role or accept an owner-issued invitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountRoleInput"
+      responses:
+        "200":
+          description: Workspace role updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountRole"
+        "401":
+          description: Authentication required
+        "403":
+          description: A matching owner invitation is required
+        "409":
+          description: The account has a different invitation
+  /specialist/assessment:
+    get:
+      operationId: getSpecialistAssessment
+      tags: [specialist]
+      summary: Get the authenticated specialist's assessment and current lockout state
+      responses:
+        "200":
+          description: Assessment questions and access state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpecialistAssessment"
+        "401":
+          description: Authentication required
+        "403":
+          description: Active specialist invitation required
+  /specialist/assessment/submit:
+    post:
+      operationId: submitSpecialistAssessment
+      tags: [specialist]
+      summary: Submit answers for server-side scoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SpecialistAssessmentInput"
+      responses:
+        "200":
+          description: Assessment result and next allowed action
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpecialistAssessment"
+        "401":
+          description: Authentication required
+        "403":
+          description: Active specialist invitation required
+        "423":
+          description: Assessment is locked until the lockout expires
+  /owner/platform-readiness:
+    get:
+      operationId: getPlatformReadiness
+      tags: [admin]
+      summary: Get a secret-free platform readiness audit for the super admin
+      responses:
+        "200":
+          description: Platform readiness summary with no credential values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformReadiness"
+        "401":
+          description: Authentication required
+        "403":
+          description: Super admin access required
+  /owner/platform-handover:
+    put:
+      operationId: updatePlatformHandover
+      tags: [admin]
+      summary: Update super-admin handover details and encrypted provider credentials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlatformHandoverInput"
+      responses:
+        "200":
+          description: Handover settings saved; secrets are never returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformHandoverResponse"
+        "401":
+          description: Authentication required
+        "403":
+          description: Super admin access required
+        "503":
+          description: Secure encryption is unavailable
+  /owner/tasks:
+    get:
+      operationId: getOwnerTasks
+      tags: [admin]
+      summary: List active production tasks
+      responses:
+        "200":
+          description: Active production tasks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionTaskList"
+        "401":
+          description: Authentication required
+        "403":
+          description: Admin access required
+  /owner/assignees:
+    get:
+      operationId: getOwnerAssignees
+      tags: [admin]
+      summary: List available task assignees
+      responses:
+        "200":
+          description: Active admins and specialists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OwnerAssignee"
+        "401":
+          description: Authentication required
+        "403":
+          description: Admin access required
+  /owner/team-members:
+    get:
+      operationId: getOwnerTeamMembers
+      tags: [admin]
+      summary: List invited and active team members
+      responses:
+        "200":
+          description: Team members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OwnerTeamMember"
+        "401":
+          description: Authentication required
+        "403":
+          description: Admin access required
+    post:
+      operationId: createOwnerTeamMember
+      tags: [admin]
+      summary: Invite a specialist or another admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OwnerTeamMemberInput"
+      responses:
+        "201":
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnerTeamMember"
+        "400":
+          description: Invalid team member
+        "401":
+          description: Authentication required
+        "403":
+          description: Admin access required
+  /owner/team-members/{memberId}:
+    delete:
+      operationId: deleteOwnerTeamMember
+      tags: [admin]
+      summary: Remove a team member and unassign their tasks
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Member removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required: [ok]
+        "401":
+          description: Authentication required
+        "403":
+          description: Admin access required
+        "404":
+          description: Team member not found
+  /specialist/tasks:
+    get:
+      operationId: getSpecialistTasks
+      tags: [specialist]
+      summary: List the signed-in specialist's assigned tasks
+      responses:
+        "200":
+          description: Assigned task queue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionTaskList"
+        "401":
+          description: Authentication required
+        "403":
+          description: Active specialist access required
+  /specialist/tasks/{taskId}:
+    patch:
+      operationId: updateSpecialistTask
+      tags: [specialist]
+      summary: Update the status of an assigned task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SpecialistTaskUpdate"
+      responses:
+        "200":
+          description: Updated production task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionTask"
+        "401":
+          description: Authentication required
+        "403":
+          description: Task is not assigned to this specialist
+        "404":
+          description: Task not found
+  /orders/{orderId}/tasks:
+    get:
+      operationId: getOrderTasks
+      tags: [admin]
+      summary: List tasks for a project
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Project tasks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionTaskList"
+        "401":
+          description: Authentication required
+        "403":
+          description: Admin access required
+        "404":
+          description: Project not found
+    post:
+      operationId: createOrderTask
+      tags: [admin]
+      summary: Add a task to a project
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductionTaskInput"
+      responses:
+        "201":
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionTask"
+        "400":
+          description: Invalid task
+        "401":
+          description: Authentication required
+        "403":
+          description: Admin access required
+        "404":
+          description: Project not found
+  /orders/{orderId}/tasks/{taskId}:
+    patch:
+      operationId: updateOrderTask
+      tags: [admin]
+      summary: Update or assign a project task
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductionTaskUpdate"
+      responses:
+        "200":
+          description: Updated production task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionTask"
+        "401":
+          description: Authentication required
+        "403":
+          description: Admin access required
+        "404":
+          description: Task not found
+  /storage/uploads/request-url:
+    post:
+      operationId: requestOrderUploadUrl
+      tags: [orders]
+      summary: Request a private project upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderUploadInput"
+      responses:
+        "200":
+          description: Signed upload URL and object path
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+        "400":
+          description: Invalid upload request
+        "401":
+          description: Authentication required
+        "403":
+          description: No access to this project
+components:
+  schemas:
+    AccountRole:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [client, specialist, admin]
+        accessStatus:
+          type: string
+          enum: [none, invited, active]
+        coreSkillCategory:
+          type: ["string", "null"]
+          enum: [video, social, copy, design, null]
+        onboardingCompleted:
+          type: boolean
+        isSuperAdmin:
+          type: boolean
+      required: [role, accessStatus, coreSkillCategory, onboardingCompleted, isSuperAdmin]
+    AccountRoleInput:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [client, specialist, admin]
+        coreSkillCategory:
+          type: string
+          enum: [video, social, copy, design]
+      required: [role]
+    SpecialistAssessmentQuestion:
+      type: object
+      properties:
+        id:
+          type: string
+        prompt:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+      required: [id, prompt, options]
+    SpecialistAssessment:
+      type: object
+      properties:
+        category:
+          type: ["string", "null"]
+          enum: [video, social, copy, design, null]
+        status:
+          type: string
+          enum: [not_started, ready, locked, passed]
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpecialistAssessmentQuestion"
+        scorePercent:
+          type: ["integer", "null"]
+        attempts:
+          type: integer
+        passedAt:
+          type: ["string", "null"]
+          format: date-time
+        lockoutUntil:
+          type: ["string", "null"]
+          format: date-time
+      required: [category, status, questions, scorePercent, attempts, passedAt, lockoutUntil]
+    SpecialistAssessmentAnswer:
+      type: object
+      properties:
+        questionId:
+          type: string
+        selectedOption:
+          type: integer
+          minimum: 0
+      required: [questionId, selectedOption]
+    SpecialistAssessmentInput:
+      type: object
+      properties:
+        answers:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/SpecialistAssessmentAnswer"
+      required: [answers]
+    PlatformReadinessProvider:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: [stripe, paystack]
+        publicKeyConfigured:
+          type: boolean
+        secretKeyConfigured:
+          type: boolean
+      required: [provider, publicKeyConfigured, secretKeyConfigured]
+    PlatformReadiness:
+      type: object
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+        masterAdminEmail:
+          type: string
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlatformReadinessProvider"
+        webhooks:
+          type: object
+          properties:
+            configured:
+              type: integer
+            active:
+              type: integer
+          required: [configured, active]
+        data:
+          type: object
+          properties:
+            clients:
+              type: integer
+            projects:
+              type: integer
+            teamMembers:
+              type: integer
+          required: [clients, projects, teamMembers]
+      required: [generatedAt, masterAdminEmail, providers, webhooks, data]
+    PlatformHandoverInput:
+      type: object
+      properties:
+        masterAdminEmail:
+          type: string
+          format: email
+        stripePublicKey:
+          type: string
+          maxLength: 500
+        stripeSecretKey:
+          type: string
+          maxLength: 2000
+        paystackPublicKey:
+          type: string
+          maxLength: 500
+        paystackSecretKey:
+          type: string
+          maxLength: 2000
+        webhookEndpoints:
+          type: array
+          items:
+            type: string
+            format: uri
+          maxItems: 20
+      required: [masterAdminEmail]
+    PlatformHandoverResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        masterAdminEmail:
+          type: string
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlatformReadinessProvider"
+      required: [ok, masterAdminEmail, providers]
+    OwnerTeamMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [specialist, admin]
+        coreSkillCategory:
+          type: ["string", "null"]
+          enum: [video, social, copy, design, null]
+        status:
+          type: string
+          enum: [invited, active, removed]
+        userId:
+          type: ["string", "null"]
+        invitedBy:
+          type: ["string", "null"]
+      required: [id, email, name, role, coreSkillCategory, status, userId, invitedBy]
+    OwnerTeamMemberInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          maxLength: 120
+        role:
+          type: string
+          enum: [specialist, admin]
+      required: [email, role]
+    OwnerAssignee:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: ["string", "null"]
+        firstName:
+          type: ["string", "null"]
+        lastName:
+          type: ["string", "null"]
+        name:
+          type: string
+      required: [id, name]
+    ProductionTask:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        serviceSlug:
+          type: string
+        templateKey:
+          type: string
+        templateVersion:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [todo, in_progress, blocked, ready_for_review, done]
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        assigneeUserId:
+          type: ["string", "null"]
+        dueAt:
+          type: ["string", "null"]
+          format: date-time
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        order:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            customerName:
+              type: string
+            customerUserId:
+              type: string
+            company:
+              type: string
+            requestStatus:
+              type: string
+            paymentStatus:
+              type: string
+          required: [id, name, customerName, customerUserId, company, requestStatus, paymentStatus]
+        assignee:
+          type: ["object", "null"]
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            email:
+              type: ["string", "null"]
+          required: [id, name, email]
+      required: [id, orderId, serviceSlug, templateKey, templateVersion, title, description, status, priority, assigneeUserId, dueAt, completedAt, createdAt, updatedAt, order, assignee]
+    ProductionTaskList:
+      type: array
+      items:
+        $ref: "#/components/schemas/ProductionTask"
+    ProductionTaskInput:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        serviceSlug:
+          type: string
+          maxLength: 120
+        description:
+          type: string
+          maxLength: 2000
+        status:
+          type: string
+          enum: [todo, in_progress, blocked, ready_for_review, done]
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        dueAt:
+          type: ["string", "null"]
+          format: date-time
+        assigneeUserId:
+          type: ["string", "null"]
+      required: [title]
+    ProductionTaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        status:
+          type: string
+          enum: [todo, in_progress, blocked, ready_for_review, done]
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        dueAt:
+          type: ["string", "null"]
+          format: date-time
+        assigneeUserId:
+          type: ["string", "null"]
+    SpecialistTaskUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [in_progress, blocked, ready_for_review]
+      required: [status]
+    OrderUploadInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        size:
+          type: integer
+          minimum: 1
+          maximum: 25000000
+        contentType:
+          type: string
+          minLength: 1
+        orderId:
+          type: string
+          format: uuid
+      required: [name, size, contentType, orderId]
+    OrderUploadUrlResponse:
+      type: object
+      properties:
+        uploadURL:
+          type: string
+          format: uri
+        objectPath:
+          type: string
+        metadata:
+          type: object
+          properties:
+            name:
+              type: string
+            size:
+              type: integer
+            contentType:
+              type: string
+            orderId:
+              type: string
+              format: uuid
+          required: [name, size, contentType, orderId]
+      required: [uploadURL, objectPath, metadata]
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    PaymentConfig:
+      type: object
+      properties:
+        paymentModel:
+          type: string
+          enum: [deposit, pay_in_full, invoice_later]
+        depositPercent:
+          type: integer
+          minimum: 1
+          maximum: 100
+        currency:
+          type: string
+          enum: [usd]
+        transferConfigured:
+          type: boolean
+      required: [paymentModel, depositPercent, currency, transferConfigured]
+    BillingPlan:
+      type: object
+      properties:
+        key:
+          type: string
+          enum: [starter, growth, scale]
+        title:
+          type: string
+        monthlyPriceUsd:
+          type: integer
+        monthlyCredits:
+          type: integer
+        features:
+          type: array
+          items:
+            type: string
+        checkoutReady:
+          type: boolean
+      required: [key, title, monthlyPriceUsd, monthlyCredits, features, checkoutReady]
+    BillingPlanList:
+      type: array
+      items:
+        $ref: "#/components/schemas/BillingPlan"
+    CreditBalance:
+      type: object
+      properties:
+        balance:
+          type: integer
+          minimum: 0
+        planKey:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+        periodEndsAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: [balance, planKey, active]
+    BillingCheckoutInput:
+      type: object
+      properties:
+        planKey:
+          type: string
+          enum: [starter, growth, scale]
+        returnUrl:
+          type: string
+          format: uri
+          maxLength: 1000
+      required: [planKey, returnUrl]
+    BillingCheckoutResponse:
+      type: object
+      properties:
+        purchaseUrl:
+          type: string
+          format: uri
+      required: [purchaseUrl]
+    BrandAsset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        category:
+          type: string
+          enum: [logo, colors_and_fonts, raw_brand_asset]
+        displayName:
+          type: string
+        downloadUrl:
+          type: string
+        fileName:
+          type: string
+        contentType:
+          type: string
+        fileSize:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, category, displayName, downloadUrl, fileName, contentType, fileSize, createdAt]
+    BrandVault:
+      type: object
+      properties:
+        brandName:
+          type: string
+        description:
+          type: string
+        colors:
+          type: array
+          items:
+            type: string
+        fonts:
+          type: array
+          items:
+            type: string
+        voiceGuidelines:
+          type: string
+        assets:
+          type: array
+          items:
+            $ref: "#/components/schemas/BrandAsset"
+      required: [brandName, description, colors, fonts, voiceGuidelines, assets]
+    BrandVaultInput:
+      type: object
+      properties:
+        brandName:
+          type: string
+          maxLength: 160
+        description:
+          type: string
+          maxLength: 2000
+        colors:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            maxLength: 32
+        fonts:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            maxLength: 120
+        voiceGuidelines:
+          type: string
+          maxLength: 5000
+      required: [brandName, colors, fonts, voiceGuidelines]
+    BrandAssetInput:
+      type: object
+      properties:
+        category:
+          type: string
+          enum: [logo, colors_and_fonts, raw_brand_asset]
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 160
+        objectPath:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        fileName:
+          type: string
+          minLength: 1
+          maxLength: 255
+        contentType:
+          type: string
+          minLength: 1
+          maxLength: 120
+        fileSize:
+          type: integer
+          minimum: 1
+          maximum: 30000000
+      required: [category, displayName, objectPath, fileName, contentType, fileSize]
+    BrandAssetUploadInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        size:
+          type: integer
+          minimum: 1
+          maximum: 30000000
+        contentType:
+          type: string
+          minLength: 1
+          maxLength: 120
+        category:
+          type: string
+          enum: [logo, colors_and_fonts, raw_brand_asset]
+      required: [name, size, contentType, category]
+    UploadUrlResponse:
+      type: object
+      properties:
+        uploadURL:
+          type: string
+          format: uri
+        objectPath:
+          type: string
+        metadata:
+          type: object
+      required: [uploadURL, objectPath, metadata]
+    AutomationStatus:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: [zapier, make, figma, canva, slack, discord]
+        label:
+          type: string
+        active:
+          type: boolean
+        configured:
+          type: boolean
+      required: [provider, label, active, configured]
+    AutomationList:
+      type: array
+      items:
+        $ref: "#/components/schemas/AutomationStatus"
+    AutomationInput:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: [zapier, make, figma, canva, slack, discord]
+        active:
+          type: boolean
+        endpoint:
+          type: string
+          format: uri
+          maxLength: 2000
+        clearEndpoint:
+          type: boolean
+      required: [provider, active]
+    CheckoutItemInput:
+      type: object
+      properties:
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 100
+        option:
+          type: string
+          minLength: 1
+          maxLength: 120
+        brief:
+          type: string
+          maxLength: 2000
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 50
+      required: [slug, option, quantity]
+    ProjectContextInput:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 160
+        website:
+          type: string
+          maxLength: 500
+        industry:
+          type: string
+          maxLength: 160
+        audience:
+          type: string
+          maxLength: 500
+      required: [name, website, industry, audience]
+    CheckoutInput:
+      type: object
+      properties:
+        customerName:
+          type: string
+          minLength: 1
+          maxLength: 160
+        customerEmail:
+          type: string
+          format: email
+        company:
+          type: string
+          maxLength: 160
+        notes:
+          type: string
+          maxLength: 4000
+        project:
+          $ref: "#/components/schemas/ProjectContextInput"
+        deliveryOption:
+          type: string
+          enum: [standard, express]
+        items:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/CheckoutItemInput"
+        requestedCustomPriceCents:
+          type: integer
+          minimum: 100
+          description: Optional customer-proposed total in cents.
+        requestedCustomPriceReason:
+          type: string
+          maxLength: 2000
+          description: Why the customer is proposing a different total.
+      required:
+        - customerName
+        - customerEmail
+        - company
+        - notes
+        - project
+        - deliveryOption
+        - items
+    CheckoutResponse:
+      type: object
+      properties:
+        checkoutUrl:
+          type: string
+          format: uri
+        orderId:
+          type: string
+          format: uuid
+        paymentModel:
+          type: string
+          enum: [deposit, pay_in_full]
+        amountDueCents:
+          type: integer
+        totalCents:
+          type: integer
+        currency:
+          type: string
+          enum: [usd]
+      required:
+        - checkoutUrl
+        - orderId
+        - paymentModel
+        - amountDueCents
+        - totalCents
+        - currency
+    OrderStatus:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        paymentStatus:
+          type: string
+          enum: [pending, checkout_failed, paid, payment_failed, cancelled, not_requested]
+        requestStatus:
+          type: string
+          enum: [request_received, in_review, awaiting_approval, in_progress, delivered, closed]
+        paymentModel:
+          type: string
+          enum: [deposit, pay_in_full, invoice_later]
+        amountDueCents:
+          type: integer
+        totalCents:
+          type: integer
+        currency:
+          type: string
+          enum: [usd]
+        requestedCustomPriceCents:
+          type: integer
+          nullable: true
+        requestedCustomPriceReason:
+          type: string
+          nullable: true
+        customPriceStatus:
+          type: string
+          enum: [none, requested, accepted, declined]
+        customerPriceDecision:
+          type: string
+          enum: [pending, approved, change_requested]
+        customerPriceFeedback:
+          type: string
+          nullable: true
+        milestones:
+          type: array
+          items:
+            $ref: "#/components/schemas/Milestone"
+        paymentReference:
+          type: string
+          nullable: true
+        paymentRequestedAt:
+          type: string
+          format: date-time
+          nullable: true
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+        transferDetails:
+          $ref: "#/components/schemas/TransferDetails"
+          nullable: true
+        unreadCount:
+          type: integer
+          minimum: 0
+      required:
+        - orderId
+        - paymentStatus
+        - requestStatus
+        - paymentModel
+        - amountDueCents
+        - totalCents
+        - currency
+        - customPriceStatus
+         - customerPriceDecision
+         - milestones
+        - unreadCount
+    OrderRequestResponse:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        requestStatus:
+          type: string
+          enum: [request_received, in_review, awaiting_approval, in_progress, delivered, closed]
+        totalCents:
+          type: integer
+        currency:
+          type: string
+          enum: [usd]
+        ownerNotificationStatus:
+          type: string
+          enum: [sent, failed]
+        creditsUsed:
+          type: integer
+        remainingCredits:
+          type: integer
+          nullable: true
+      required: [orderId, requestStatus, totalCents, currency, ownerNotificationStatus, creditsUsed, remainingCredits]
+    OrderList:
+      type: array
+      items:
+        $ref: "#/components/schemas/OrderStatus"
+    MessageInput:
+      type: object
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        attachmentUrl:
+          type: string
+          maxLength: 1000
+        attachmentName:
+          type: string
+          maxLength: 255
+        attachmentContentType:
+          type: string
+          maxLength: 120
+        attachmentSize:
+          type: integer
+          minimum: 1
+      required: [body]
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        authorUserId:
+          type: string
+        authorName:
+          type: string
+        authorImageUrl:
+          type: string
+          nullable: true
+        authorRole:
+          type: string
+          enum: [customer, owner]
+        body:
+          type: string
+        attachmentUrl:
+          type: string
+          nullable: true
+        attachmentName:
+          type: string
+          nullable: true
+        attachmentContentType:
+          type: string
+          nullable: true
+        attachmentSize:
+          type: integer
+          nullable: true
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        reactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reaction"
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, orderId, authorUserId, authorName, authorRole, body, createdAt]
+    MessageList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Message"
+    TypingInput:
+      type: object
+      properties:
+        typing:
+          type: boolean
+      required: [typing]
+    TypingStatus:
+      type: object
+      properties:
+        customerTyping:
+          type: boolean
+        ownerTyping:
+          type: boolean
+      required: [customerTyping, ownerTyping]
+    ReactionInput:
+      type: object
+      properties:
+        emoji:
+          type: string
+          enum: ["👍", "❤️", "🔥", "✅", "🎉"]
+      required: [emoji]
+    Reaction:
+      type: object
+      properties:
+        emoji:
+          type: string
+        count:
+          type: integer
+        reacted:
+          type: boolean
+      required: [emoji, count, reacted]
+    PriceChangeInput:
+      type: object
+      properties:
+        feedback:
+          type: string
+          minLength: 1
+          maxLength: 2000
+      required: [feedback]
+    PriceDecisionResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        customerPriceDecision:
+          type: string
+          enum: [approved, change_requested]
+      required: [ok, customerPriceDecision]
+    Milestone:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        state:
+          type: string
+          enum: [complete, current, upcoming]
+      required: [key, label, description, state]
+    ActivityEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        actorUserId:
+          type: string
+          nullable: true
+        eventType:
+          type: string
+        summary:
+          type: string
+        metadata:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, orderId, eventType, summary, metadata, createdAt]
+    Deliverable:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        deliverableKey:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        downloadUrl:
+          type: string
+        fileName:
+          type: string
+        contentType:
+          type: string
+        fileSize:
+          type: integer
+        version:
+          type: integer
+        status:
+          type: string
+          enum: [submitted, changes_requested, approved]
+        customerFeedback:
+          type: string
+          nullable: true
+        approvedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, orderId, deliverableKey, title, description, downloadUrl, fileName, contentType, fileSize, version, status, createdAt, updatedAt]
+    DeliverableList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Deliverable"
+    DeliverableInput:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        deliverableKey:
+          type: string
+          minLength: 1
+          maxLength: 120
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          maxLength: 2000
+        objectPath:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        fileName:
+          type: string
+          minLength: 1
+          maxLength: 255
+        contentType:
+          type: string
+          minLength: 1
+          maxLength: 120
+        fileSize:
+          type: integer
+          minimum: 1
+      required: [deliverableKey, title, objectPath, fileName, contentType, fileSize]
+    DeliverableReviewInput:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [approved, changes_requested]
+        feedback:
+          type: string
+          maxLength: 2000
+      required: [status]
+    DeliverableReviewResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        status:
+          type: string
+          enum: [approved, changes_requested]
+        projectCompleted:
+          type: boolean
+      required: [ok, status, projectCompleted]
+    DeliverableComment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        deliverableId:
+          type: string
+          format: uuid
+        authorName:
+          type: string
+        body:
+          type: string
+        markerType:
+          type: string
+          enum: [general, timestamp, point]
+        timestampMs:
+          type: integer
+          nullable: true
+        x:
+          type: number
+          nullable: true
+        y:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, orderId, deliverableId, authorName, body, markerType, timestampMs, x, y, createdAt]
+    DeliverableCommentList:
+      type: array
+      items:
+        $ref: "#/components/schemas/DeliverableComment"
+    DeliverableCommentInput:
+      type: object
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        markerType:
+          type: string
+          enum: [general, timestamp, point]
+        timestampMs:
+          type: integer
+          minimum: 0
+        x:
+          type: number
+          minimum: 0
+          maximum: 1
+        y:
+          type: number
+          minimum: 0
+          maximum: 1
+      required: [body, markerType]
+    TransferDetails:
+      type: object
+      properties:
+        bankName:
+          type: string
+        accountName:
+          type: string
+        accountNumber:
+          type: string
+        routingDetails:
+          type: string
+        bankAddress:
+          type: string
+        transferInstructions:
+          type: string
+        currency:
+          type: string
+      required: [bankName, accountName, accountNumber, routingDetails, bankAddress, transferInstructions, currency]
+

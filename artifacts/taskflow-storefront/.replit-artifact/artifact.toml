@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "TaskFlow"
+description = "A professional digital-services storefront where international customers can browse services, configure multiple deliverables, group them into one project, schedule delivery, and review a combined checkout."
+version = "1.0.0"
+id = "artifacts/taskflow-storefront"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18287
+
+[services.development]
+run = "pnpm --filter @workspace/taskflow-storefront run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/taskflow-storefront", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/taskflow-storefront/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18287"
+BASE_PATH = "/"
